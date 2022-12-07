@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+    />
+    <title>Plutonium</title>
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#434c5e"
+    />
+    <meta name="googlebot" content="index, follow, snippet" />
+    <link id="icon" rel="shortcut icon" href="favicon.ico" />
+    <link rel="stylesheet" href="index.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+      
+      function login() {
+        socket.emit("login", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value });
+      }
+
+      function signup() {
+        socket.emit("signup", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value });
+      }
+
+      socket.on("loginReply", data => {
+        if (data == "valid:regular") { document.getElementById("login").style.display = "none"; document.getElementById("main").style.display = "block"; document.getElementById("bookmarks").style.display = "block"; socket.emit("bookmarks", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value }); }
+        else if (data == "valid:admin") { document.getElementById("login").style.display = "none"; document.getElementById("admin").style.display = "block"; document.getElementById("bookmarks").style.display = "block"; socket.emit("bookmarks", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value }); }
+        else if (data == "valid:trial") { document.getElementById("login").style.display = "none"; document.getElementById("trial").style.display = "block"; }
+        else if (data == "valid:disabled") { alert("Your account is disabled - probally because your trial time ran out.\nIf you didn't get a trial, please ask whoever sold you this for a trial acccount."); }
+        else if (data == "session") { alert("You can't use someone else's account while they are logged in! Get your own."); }
+        else { alert("Invalid Username / Password."); }
+      });
+
+      socket.on("bookmarks", data => {
+        while (document.getElementById("bookmarks").firstChild.id != "addBookmark") document.getElementById("bookmarks").removeChild(document.getElementById("bookmarks").firstChild);
+        while (document.getElementById("bookmarks").lastChild.id != "addBookmark") document.getElementById("bookmarks").removeChild(document.getElementById("bookmarks").lastChild);
+        data.forEach(element => {
+          if (element.trim().length > 0) {
+            var temp = document.createElement("div");
+            temp.id = element;
+            temp.style.background = "black";
+            temp.addEventListener("click", async function() { goTo(temp.id); });
+            document.getElementById("bookmarks").appendChild(temp);
+            socket.emit("getfavicon", element);
+          }
+        });
+      });
+
+      function isUrl(val = "") {
+        if (
+          /^http(s?):\/\//.test(val) ||
+          (val.includes(".") && val.substr(0, 1) !== " ")
+        )
+          return true;
+        return false;
+      }
+
+      function toURL(base) {
+        var url = base;
+        if (!isUrl(url)) url = "https://www.google.com/search?q=" + url;
+        else if (!(url.startsWith("https://") || url.startsWith("http://")))
+          url = "http://" + url;
+        return url;
+      }
+
+      async function goTo(url) {
+        try {
+          await registerSW();
+        } catch (err) {
+          error.textContent = "Failed to register service worker.";
+          errorCode.textContent = err.toString();
+          throw err;
+        }
+        document.getElementById("mainframe").src = __uv$config.prefix + __uv$config.encodeUrl(toURL(url));
+        document.getElementById("mainframe").style.display = "block";
+        document.getElementById("navbar").style.display = "block";
+      }
+
+      socket.on("adminuserpass", (data) => { alert(data[0] + "'s password is " + data[1]) })
+
+      socket.on("favicon", (data) => {
+        document.getElementById(data[0]).style.background = "url(" + data[1] + ")";
+        document.getElementById(data[0]).style.backgroundSize = "cover";
+      });
+
+      socket.on("webdata", (data) => {
+        document.getElementById("icon").href = data[0];
+        document.title = data[1];
+      });
+
+      socket.on("bookmarked", (data) => {
+        if (data === "true") document.getElementById("bookmarkBtn").src = "starred.png";
+      });
+
+      socket.on("adminusers", (data) => {
+        while (document.getElementById("usersTable").firstChild) document.getElementById("usersTable").removeChild(document.getElementById("usersTable").firstChild);
+        data.forEach(el => {
+          var row = document.createElement("tr");
+
+          var name = document.createElement("th");
+          name.innerText = el.split(":")[0];
+          var type = document.createElement("th");
+          type.innerText = el.split(":")[1];
+          var trial = document.createElement("th");
+          trial.innerText = el.split(":")[2];
+
+          row.appendChild(name);
+          row.appendChild(type);
+          row.appendChild(trial);
+
+          var enable = document.createElement("th");
+          if (el.split(":")[1] == "trial" || el.split(":")[1] == "disabled")
+            enable.innerHTML = `<button onclick="socket.emit('admin', [ 'enableuser', { 'username': document.getElementById('username').value, 'password': document.getElementById('current-password').value, 'user': '${el.split(":")[0]}' } ]);">Enable</button>`;
+          else if (el.split(":")[1] == "regular")
+            enable.innerHTML = `<button onclick="socket.emit('admin', [ 'disableuser', { 'username': document.getElementById('username').value, 'password': document.getElementById('current-password').value, 'user': '${el.split(":")[0]}' } ]);">Disable</button>`;
+          else
+            enable.innerText = "[Admin]";
+          var trial = document.createElement("th");
+          if (el.split(":")[1] == "disabled") trial.innerHTML = `<button onclick="socket.emit('admin', [ 'givetrial', { 'username': document.getElementById('username').value, 'password': document.getElementById('current-password').value, 'user': '${el.split(":")[0]}' } ]);">GiveTrial</button>`;
+          else trial.innerText = "[Regular]"
+          var pass = document.createElement("th");
+          if (el.split(":")[1] == "admin")
+            pass.innerText = "[Admin]";
+          else
+            pass.innerHTML = `<button onclick="socket.emit('admingetpass', { 'username': document.getElementById('username').value, 'password': document.getElementById('current-password').value, 'user': '${el.split(":")[0]}' });">GetPass</button>`;
+
+          row.appendChild(enable);
+          row.appendChild(trial);
+          row.appendChild(pass);
+          document.getElementById("usersTable").appendChild(row);
+        });
+      });
+
+      function replaceTarget() {
+        document.getElementById("mainframe").contentWindow.document.body.innerHTML = document.getElementById("mainframe").contentWindow.document.body.innerHTML.replaceAll(/target=("|')(.*?)("|')/g, function(match) { return match.includes("'") ? "target='_self'" : 'target="_self"'; });
+      }
+
+      setInterval(() => {
+        if (!socket.connected) {
+          socket = socket.connect();
+          socket.emit("login", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value });
+        }
+      }, 200);
+    </script>
+  </head>
+
+  <body>
+    <div id="login" style="display: block; width: 100%; height: 100%; position: absolute;">
+      <form id="login-form" class="flex-center">
+        <img src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
+        <img src="logo.png" alt="Logo" style="left: 46%; width:10%; top:25%; position: absolute;"/>
+        <input id="username" style="top: 50%; position: absolute;" placeholder="Username" />
+        <input id="current-password" style="top: 60%; position: absolute;"  type="password"/>
+        <img onclick="login()" style="top: 72.5%; position: absolute; width:6%; left:45%;" src="login.png" alt="Login" />
+        <img onclick="signup()" style="top: 72.5%; position: absolute; width:6%; left:52%;" src="signup.png" alt="Signup" />
+      </form>
+    </div>
+    <iframe id="mainframe" onload='replaceTarget(); if (this.contentWindow.location.href != "about:blank") socket.emit("checkbookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": __uv$config.decodeUrl(this.contentWindow.location.href.split(__uv$config.prefix)[1]) });' style="display: none; top:7.5%; width: 100%; height: 92.5%; border: none; position: absolute; background-color: white; z-index: 2;" src="" allowfullscreen="true" ></iframe>
+    <div id="navbar" style="display: none;">
+      <img src="refresh.png" onclick="document.getElementById('mainframe').contentWindow.location.reload();" style="position: absolute; height: 100%;">
+      <img src="home.png" onclick='document.getElementById("mainframe").style.display = "none";document.getElementById("navbar").style.display = "none";' style="position: absolute; left: 5%; height: 100%;">
+      <img src="fullscreen.png" onclick="document.getElementById('mainframe').requestFullscreen();" style="position: absolute; height: 100%; right: 5%;">
+      <img src="unstarred.png" id="bookmarkBtn" onclick='socket.emit("bookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": __uv$config.decodeUrl(document.getElementById("mainframe").contentWindow.location.href) }); this.src = this.src == "unstarred.png" ? "starred.png" : "unstarred.png"' style="position: absolute; height: 100%; right: 0%;">
+      <form class="flex-center" style="top: -42.5%; left: 12.5%; width: 75%; position: absolute;" onsubmit="event.preventDefault();">
+        <input name="address" placeholder="Search" />
+      </form>
+    </div>
+    <div style="display: none;" id="bookmarks"><div id="addBookmark" onclick='socket.emit("bookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": toURL(prompt("URL of site to bookmark:").trim()) });' style="background: url('bookmark.png'); background-size: cover;"></div></div>
+    <div id="main" style="display: none; position: absolute">
+      <img src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
+        <div
+        title="Logo"
+        class="flex-center logo-wrapper header-center"
+      >
+        <img class="logo" src="logo.png" alt="Logo" />
+      </div>
+
+      <form class="flex-center" onsubmit="event.preventDefault();">
+        <input name="address" placeholder="Search the web freely!" />
+      </form>
+    </div>
+
+    <div id="admin" style="display: none;">
+        <div id="adminTools" style="display: none; width: 100%; height: 100%; position: absolute; z-index: 2;">
+          <h1 style="text-align: center; width: 100%; top: 5%; color: white; position: absolute;">Admin Tools</h1>
+          <img src="x.png" style="width: 3%; right: 0%; position: absolute;" onclick="document.getElementById('adminTools').style.display = 'none';document.getElementById('notAdminTools').style.display = 'block';document.getElementById('bookmarks').style.display = 'block';"/>
+          <img src="refresh.png" style="width: 3%; right: 0%; top: 7.5%; position: absolute;" onclick='socket.emit("admingetusers", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value });' style="position: absolute; height: 100%;">
+          <table id="usersTable" style="top: 15%; width: 80%; left: 10%; height: 70%; position:absolute;"></table>
+        </div>
+        <div id="notAdminTools" style="display: block;">
+          <img src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
+          <div
+          title="Logo"
+          class="flex-center logo-wrapper header-center"
+        >
+          <img class="logo" src="logo.png" alt="Logo" onclick="document.getElementById('adminTools').style.display = 'block';document.getElementById('notAdminTools').style.display = 'none';document.getElementById('bookmarks').style.display = 'none';document.getElementById('navbar').style.display = 'none';socket.emit('admingetusers', { 'username': document.getElementById('username').value, 'password': document.getElementById('current-password').value });" />
+        </div>
+        <form class="flex-center" onsubmit="event.preventDefault();">
+          <input name="address" placeholder="Search the web freely!" />
+        </form>
+      </div>
+    </div>
+
+    <div id="trial" style="display: none;">
+      <img src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
+      <div
+        title="Logo"
+        class="flex-center logo-wrapper header-center"
+      >
+        <img class="logo" src="logo.png" alt="Logo" />
+      </div>
+
+    <form class="flex-center" onsubmit="event.preventDefault();">
+      <input name="address" placeholder="Search the web freely!" />
+    </form>
+    </div>
+  </div>
+    <script src="uv/uv.bundle.js"></script>
+    <script src="uv/uv.config.js"></script>
+    <script src="register-sw.js"></script>
+    <script src="index.js"></script>
+  </body>
+</html>
