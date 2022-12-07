@@ -18,16 +18,20 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       var socket = io();
+      loggedIn = false;
       
       function login() {
+        document.getElementById("loginbtn").style.display = "none";
         socket.emit("login", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value });
       }
 
       function signup() {
         socket.emit("signup", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value });
+        alert("Your request has ben sent. Check with a salesperson to get a free 3 day trial!");
       }
 
       socket.on("loginReply", data => {
+        if (data.startsWith("valid") && data != "valid:disabled") loggedIn = true;
         if (data == "valid:regular") { document.getElementById("login").style.display = "none"; document.getElementById("main").style.display = "block"; document.getElementById("bookmarks").style.display = "block"; socket.emit("bookmarks", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value }); }
         else if (data == "valid:admin") { document.getElementById("login").style.display = "none"; document.getElementById("admin").style.display = "block"; document.getElementById("bookmarks").style.display = "block"; socket.emit("bookmarks", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value }); }
         else if (data == "valid:trial") { document.getElementById("login").style.display = "none"; document.getElementById("trial").style.display = "block"; }
@@ -79,6 +83,7 @@
         document.getElementById("mainframe").src = __uv$config.prefix + __uv$config.encodeUrl(toURL(url));
         document.getElementById("mainframe").style.display = "block";
         document.getElementById("navbar").style.display = "block";
+        document.getElementById("cloakBTN").style.display = "none";
       }
 
       socket.on("adminuserpass", (data) => { alert(data[0] + "'s password is " + data[1]) })
@@ -143,27 +148,27 @@
       setInterval(() => {
         if (!socket.connected) {
           socket = socket.connect();
-          socket.emit("login", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value });
+          if (loggedIn) socket.emit("login", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value });
         }
       }, 200);
     </script>
   </head>
 
   <body>
+    <img id="cloakBTN" src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
     <div id="login" style="display: block; width: 100%; height: 100%; position: absolute;">
       <form id="login-form" class="flex-center">
-        <img src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
         <img src="logo.png" alt="Logo" style="left: 46%; width:10%; top:25%; position: absolute;"/>
         <input id="username" style="top: 50%; position: absolute;" placeholder="Username" />
-        <input id="current-password" style="top: 60%; position: absolute;"  type="password"/>
-        <img onclick="login()" style="top: 72.5%; position: absolute; width:6%; left:45%;" src="login.png" alt="Login" />
+        <input id="current-password" style="top: 60%; position: absolute;" placeholder="Password" type="password"/>
+        <img id="loginbtn" onclick="login()" style="top: 72.5%; position: absolute; width:6%; left:45%;" src="login.png" alt="Login" />
         <img onclick="signup()" style="top: 72.5%; position: absolute; width:6%; left:52%;" src="signup.png" alt="Signup" />
       </form>
     </div>
     <iframe id="mainframe" onload='replaceTarget(); if (this.contentWindow.location.href != "about:blank") socket.emit("checkbookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": __uv$config.decodeUrl(this.contentWindow.location.href.split(__uv$config.prefix)[1]) });' style="display: none; top:7.5%; width: 100%; height: 92.5%; border: none; position: absolute; background-color: white; z-index: 2;" src="" allowfullscreen="true" ></iframe>
     <div id="navbar" style="display: none;">
       <img src="refresh.png" onclick="document.getElementById('mainframe').contentWindow.location.reload();" style="position: absolute; height: 100%;">
-      <img src="home.png" onclick='document.getElementById("mainframe").style.display = "none";document.getElementById("navbar").style.display = "none";' style="position: absolute; left: 5%; height: 100%;">
+      <img src="home.png" onclick='document.getElementById("mainframe").style.display = "none";document.getElementById("navbar").style.display = "none";document.getElementById("cloakBTN").style.display = "block";' style="position: absolute; left: 5%; height: 100%;">
       <img src="fullscreen.png" onclick="document.getElementById('mainframe').requestFullscreen();" style="position: absolute; height: 100%; right: 5%;">
       <img src="unstarred.png" id="bookmarkBtn" onclick='socket.emit("bookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": __uv$config.decodeUrl(document.getElementById("mainframe").contentWindow.location.href) }); this.src = this.src == "unstarred.png" ? "starred.png" : "unstarred.png"' style="position: absolute; height: 100%; right: 0%;">
       <form class="flex-center" style="top: -42.5%; left: 12.5%; width: 75%; position: absolute;" onsubmit="event.preventDefault();">
@@ -172,7 +177,6 @@
     </div>
     <div style="display: none;" id="bookmarks"><div id="addBookmark" onclick='socket.emit("bookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": toURL(prompt("URL of site to bookmark:").trim()) });' style="background: url('bookmark.png'); background-size: cover;"></div></div>
     <div id="main" style="display: none; position: absolute">
-      <img src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
         <div
         title="Logo"
         class="flex-center logo-wrapper header-center"
@@ -193,7 +197,6 @@
           <table id="usersTable" style="top: 15%; width: 80%; left: 10%; height: 70%; position:absolute;"></table>
         </div>
         <div id="notAdminTools" style="display: block;">
-          <img src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
           <div
           title="Logo"
           class="flex-center logo-wrapper header-center"
@@ -207,7 +210,6 @@
     </div>
 
     <div id="trial" style="display: none;">
-      <img src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
       <div
         title="Logo"
         class="flex-center logo-wrapper header-center"
