@@ -155,7 +155,7 @@
   </head>
 
   <body>
-    <img id="cloakBTN" src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%;"/>
+    <img id="cloakBTN" src="cloak.png" onclick="socket.emit('getwebdata', toURL(prompt('URL to cloak?')))" style="left: 0%; top: 0%; position: absolute; height: 7.5%; z-index: 1;"/>
     <div id="login" style="display: block; width: 100%; height: 100%; position: absolute;">
       <form id="login-form" class="flex-center">
         <img src="logo.png" alt="Logo" style="left: 46%; width:10%; top:25%; position: absolute;"/>
