@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
     try {
       if (data.startsWith("http"))
         webIconScraper({
-          url: data,
+          url: data.split("/")[0] + "//" + data.split("/")[2],
           sort: 'des',
           limit: 1,
           checkStatus: true,

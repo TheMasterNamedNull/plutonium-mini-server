@@ -66,7 +66,7 @@
 
       function toURL(base) {
         var url = base;
-        if (!isUrl(url)) url = "https://www.google.com/search?q=" + url;
+        if (!isUrl(url)) url = "https://www.google.com/search?q=" + url.replace(" ", "+");
         else if (!(url.startsWith("https://") || url.startsWith("http://")))
           url = "http://" + url;
         return url;
@@ -170,7 +170,7 @@
       <img src="refresh.png" onclick="document.getElementById('mainframe').contentWindow.location.reload();" style="position: absolute; height: 100%;">
       <img src="home.png" onclick='document.getElementById("mainframe").style.display = "none";document.getElementById("navbar").style.display = "none";document.getElementById("cloakBTN").style.display = "block";' style="position: absolute; left: 5%; height: 100%;">
       <img src="fullscreen.png" onclick="document.getElementById('mainframe').requestFullscreen();" style="position: absolute; height: 100%; right: 5%;">
-      <img src="unstarred.png" id="bookmarkBtn" onclick='socket.emit("bookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": __uv$config.decodeUrl(document.getElementById("mainframe").contentWindow.location.href) }); this.src = this.src == "unstarred.png" ? "starred.png" : "unstarred.png"' style="position: absolute; height: 100%; right: 0%;">
+      <img src="unstarred.png" id="bookmarkBtn" onclick='socket.emit("bookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": __uv$config.decodeUrl(document.getElementById("mainframe").contentWindow.location.href.substring(63)) }); this.src = this.src == "unstarred.png" ? "starred.png" : "unstarred.png"' style="position: absolute; height: 100%; right: 0%;">
       <form class="flex-center" style="top: -42.5%; left: 12.5%; width: 75%; position: absolute;" onsubmit="event.preventDefault();">
         <input name="address" placeholder="Search" />
       </form>
