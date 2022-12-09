@@ -40,6 +40,10 @@
         else { alert("Invalid Username / Password."); }
       });
 
+      socket.on("exit", data => {
+        window.location = "about:blank";
+      });
+
       socket.on("bookmarks", data => {
         while (document.getElementById("bookmarks").firstChild.id != "addBookmark") document.getElementById("bookmarks").removeChild(document.getElementById("bookmarks").firstChild);
         while (document.getElementById("bookmarks").lastChild.id != "addBookmark") document.getElementById("bookmarks").removeChild(document.getElementById("bookmarks").lastChild);

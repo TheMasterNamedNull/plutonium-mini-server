@@ -124,4 +124,9 @@ server.on("listening", () => {
   );
 });
 
-server.listen(port);
+setInterval(() => {
+  if (new Date().getHours() == 15) io.emit("exit", "poof");
+}, 300000);
+
+if (new Date().getHours() < 15 && new Date().getHours() > 7) server.listen(port);
+else process.exit(0);
