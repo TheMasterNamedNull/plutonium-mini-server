@@ -34,7 +34,7 @@
         if (data.startsWith("valid") && data != "valid:disabled") loggedIn = true;
         if (data == "valid:regular") { document.getElementById("login").style.display = "none"; document.getElementById("main").style.display = "block"; document.getElementById("bookmarks").style.display = "block"; socket.emit("bookmarks", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value }); }
         else if (data == "valid:admin") { document.getElementById("login").style.display = "none"; document.getElementById("admin").style.display = "block"; document.getElementById("bookmarks").style.display = "block"; socket.emit("bookmarks", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value }); }
-        else if (data == "valid:trial") { document.getElementById("login").style.display = "none"; document.getElementById("trial").style.display = "block"; }
+        else if (data == "valid:trial") { document.getElementById("login").style.display = "none"; document.getElementById("main").style.display = "block"; document.getElementById("bookmarkBtn").style.display = "none"; }
         else if (data == "valid:disabled") { alert("Your account is disabled - probally because your trial time ran out.\nIf you didn't get a trial, please ask whoever sold you this for a trial acccount."); }
         else if (data == "session") { alert("You can't use someone else's account while they are logged in! Get your own."); }
         else { alert("Invalid Username / Password."); }
@@ -80,8 +80,6 @@
         try {
           await registerSW();
         } catch (err) {
-          error.textContent = "Failed to register service worker.";
-          errorCode.textContent = err.toString();
           throw err;
         }
         document.getElementById("mainframe").src = __uv$config.prefix + __uv$config.encodeUrl(toURL(url));
@@ -180,13 +178,12 @@
       </form>
     </div>
     <div style="display: none;" id="bookmarks"><div id="addBookmark" onclick='socket.emit("bookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": toURL(prompt("URL of site to bookmark:").trim()) });' style="background: url('bookmark.png'); background-size: cover;"></div></div>
-    <div id="main" style="display: none; position: absolute">
+    <div id="main" style="display: none;">
         <div
         title="Logo"
         class="flex-center logo-wrapper header-center"
       >
-        <img class="logo" src="logo.png" alt="Logo" />
-      </div>
+      <img class="logo" src="logo.png" alt="Logo" />
 
       <form class="flex-center" onsubmit="event.preventDefault();">
         <input name="address" placeholder="Search the web freely!" />
@@ -211,19 +208,6 @@
           <input name="address" placeholder="Search the web freely!" />
         </form>
       </div>
-    </div>
-
-    <div id="trial" style="display: none;">
-      <div
-        title="Logo"
-        class="flex-center logo-wrapper header-center"
-      >
-        <img class="logo" src="logo.png" alt="Logo" />
-      </div>
-
-    <form class="flex-center" onsubmit="event.preventDefault();">
-      <input name="address" placeholder="Search the web freely!" />
-    </form>
     </div>
   </div>
     <script src="uv/uv.bundle.js"></script>
