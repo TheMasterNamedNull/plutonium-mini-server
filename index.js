@@ -128,5 +128,9 @@ setInterval(() => {
   if (new Date().getHours() == 15) io.emit("exit", "poof");
 }, 300000);
 
-if (new Date().getHours() < 15 && new Date().getHours() > 7) server.listen(port);
-else process.exit(0);
+if (new Date().getHours() < 15 && new Date().getHours() > 7 && new Date().getDay() < 6) server.listen(port);
+else {
+  var app2 = express();
+  app2.use("/*", (req, res) => { res.send("Sorry, 8AM-3PM Mon-Fri Only."); app2.removeAllListeners(); process.exit(0); });
+  app2.listen(port);
+}
