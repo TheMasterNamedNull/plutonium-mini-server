@@ -181,7 +181,7 @@
     <div style="display: none;" id="bookmarks"><div id="addBookmark" onclick='socket.emit("bookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": toURL(prompt("URL of site to bookmark:").trim()) });' style="background: url('bookmark.png'); background-size: cover;"></div></div>
     <div id="main" style="display: none;">
         <img src="home.png" onclick='document.getElementById("mainframe").style.display = "block";document.getElementById("navbar").style.display = "block";document.getElementById("cloakBTN").style.display = "none";' style="position: absolute; left: 5%; height: 7.5%;">
-        <img src="swap.png" onclick='cookies = !cookies;' style="position: absolute; left: 10%; height: 7.5%;">
+        <img src="cookie.png" onclick='this.src = cookies ? "cookie.png" : "speed.png"; cookies = !cookies;' style="position: absolute; left: 10%; height: 7.5%;">
         <div
         title="Logo"
         class="flex-center logo-wrapper header-center"
