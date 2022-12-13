@@ -19,6 +19,7 @@
     <script>
       var socket = io();
       loggedIn = false;
+      cookies = false;
       
       function login() {
         document.getElementById("loginbtn").style.display = "none";
@@ -82,7 +83,7 @@
         } catch (err) {
           throw err;
         }
-        document.getElementById("mainframe").src = __uv$config.prefix + __uv$config.encodeUrl(toURL(url));
+        document.getElementById("mainframe").src = (cookies ? "cookie" : "") + __uv$config.prefix + __uv$config.encodeUrl(toURL(url));
         document.getElementById("mainframe").style.display = "block";
         document.getElementById("navbar").style.display = "block";
         document.getElementById("cloakBTN").style.display = "none";
@@ -167,7 +168,7 @@
         <img onclick="signup()" style="top: 72.5%; position: absolute; width:6%; left:52%;" src="signup.png" alt="Signup" />
       </form>
     </div>
-    <iframe id="mainframe" onload='replaceTarget(); if (this.contentWindow.location.href != "about:blank") socket.emit("checkbookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": __uv$config.decodeUrl(this.contentWindow.location.href.split(__uv$config.prefix)[1]) });' style="display: none; top:7.5%; width: 100%; height: 92.5%; border: none; position: absolute; background-color: white; z-index: 2;" src="" allowfullscreen="true" ></iframe>
+    <iframe id="mainframe" onload='replaceTarget(); if (this.contentWindow.location.href != "about:blank") socket.emit("checkbookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": (cookies ? this.contentWindow.location.href.split((cookies ? "cookie" : "") + __uv$config.prefix) : __uv$config.decodeUrl(this.contentWindow.location.href.split(__uv$config.prefix)[1])) });' style="display: none; top:7.5%; width: 100%; height: 92.5%; border: none; position: absolute; background-color: white; z-index: 2;" src="" allowfullscreen="true" ></iframe>
     <div id="navbar" style="display: none;">
       <img src="refresh.png" onclick="document.getElementById('mainframe').contentWindow.location.reload();" style="position: absolute; height: 100%;">
       <img src="home.png" onclick='document.getElementById("mainframe").style.display = "none";document.getElementById("navbar").style.display = "none";document.getElementById("cloakBTN").style.display = "block";' style="position: absolute; left: 5%; height: 100%;">
@@ -179,6 +180,8 @@
     </div>
     <div style="display: none;" id="bookmarks"><div id="addBookmark" onclick='socket.emit("bookmark", { "username": document.getElementById("username").value, "password": document.getElementById("current-password").value, "url": toURL(prompt("URL of site to bookmark:").trim()) });' style="background: url('bookmark.png'); background-size: cover;"></div></div>
     <div id="main" style="display: none;">
+        <img src="home.png" onclick='document.getElementById("mainframe").style.display = "block";document.getElementById("navbar").style.display = "block";document.getElementById("cloakBTN").style.display = "none";' style="position: absolute; left: 5%; height: 7.5%;">
+        <img src="swap.png" onclick='cookies = !cookies;' style="position: absolute; left: 10%; height: 7.5%;">
         <div
         title="Logo"
         class="flex-center logo-wrapper header-center"
@@ -198,6 +201,8 @@
           <table id="usersTable" style="top: 15%; width: 80%; left: 10%; height: 70%; position:absolute;"></table>
         </div>
         <div id="notAdminTools" style="display: block;">
+        <img src="home.png" onclick='document.getElementById("mainframe").style.display = "block";document.getElementById("navbar").style.display = "block";document.getElementById("cloakBTN").style.display = "none";' style="position: absolute; left: 5%; height: 7.5%;">
+        <img src="swap.png" onclick='cookies = !cookies;' style="position: absolute; left: 10%; height: 7.5%;">
           <div
           title="Logo"
           class="flex-center logo-wrapper header-center"
