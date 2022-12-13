@@ -8,9 +8,56 @@ import { Server } from "socket.io";
 import fetch from 'node-fetch';
 import webIconScraper from 'web-icon-scraper';
 import getTitleAtUrl from 'get-title-at-url';
+var Unblocker = require('unblocker');
 
 const bare = createBareServer("/bare/");
 const app = express();
+
+var config = {
+    prefix: '/cookiePZPER2fQG1Q8EsOlWRNeHqK0Dty2WHUw4PyGr41R/',
+    host: null,
+    requestMiddleware: [],
+    responseMiddleware: [],
+    standardMiddleware: true,
+    processContentTypes: [
+        'text/html',
+        'application/xml+xhtml',
+        'application/xhtml+xml'
+    ]
+}
+
+var host = Unblocker.host(config);
+var referer = Unblocker.referer(config);
+var cookies = Unblocker.cookies(config);
+var hsts = Unblocker.hsts(config);
+var hpkp = Unblocker.hpkp(config);
+var csp = Unblocker.csp(config);
+var decompress = Unblocker.decompress(config);
+var charsets = Unblocker.charsets(config);
+var metaRobots = Unblocker.metaRobots(config);
+var contentLength = Unblocker.contentLength(config);
+
+config.requestMiddleware = [
+    host,
+    referer,
+    decompress.handleRequest,
+    cookies.handleRequest,
+    function(data) { if (data.url.startsWith("ads") || data.url.startsWith("doubleclick")) data.clientResponse.status(403).send('NO ADS'); }
+];
+
+config.responseMiddleware = [
+    hsts,
+    hpkp,
+    csp,
+    decompress.handleResponse,
+    charsets,
+    cookies.handleResponse,
+    metaRobots,
+    contentLength,
+];
+
+var unblocker = new Unblocker(config);
+app.use(unblocker);
 
 app.use(express.static("./public"));
 app.use("/uv/", express.static(uvPath));
